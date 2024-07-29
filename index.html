@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steven's Weird-O-Meter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        .image-container {
+            margin-top: 20px;
+        }
+        .rating-scale {
+            margin-top: 20px;
+        }
+        .leaderboard {
+            margin-top: 40px;
+        }
+        .message {
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+<h1>Steven's Weird-O-Meter</h1>
+<div class="image-container">
+    <img id="steven-image" src="" alt="Steven" width="300">
+</div>
+<div class="rating-scale" style="display: none;">
+    <p>How weird is this?</p>
+    <button onclick="rateWeirdness(1)">1</button>
+    <button onclick="rateWeirdness(2)">2</button>
+    <button onclick="rateWeirdness(3)">3</button>
+    <button onclick="rateWeirdness(4)">4</button>
+    <button onclick="rateWeirdness(5)">5</button>
+</div>
+<div class="leaderboard">
+    <h2>Weirdness Leaderboard</h2>
+    <ul id="leaderboard-list"></ul>
+</div>
+<div class="message" id="message"></div>
+
+<script>
+    const userId = 'unique-user-id'; // Replace with a method to get unique user ID
+
+    function rateWeirdness(rating) {
+        const imageId = document.getElementById('steven-image').dataset.imageId;
+        fetch('https://your-api-url/rate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId: userId, imageId: parseInt(imageId), rating: rating }),
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                fetchNextImage();
+                fetchLeaderboard();
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+    }
+
+    function fetchNextImage() {
+        fetch(`https://your-api-url/next-image?userId=${userId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('No more images to rate');
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('steven-image').src = data.imageUrl;
+                document.getElementById('steven-image').dataset.imageId = data.imageId;
+                document.querySelector('.rating-scale').style.display = 'block';
+                document.getElementById('message').textContent = '';
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                document.getElementById('steven-image').src = '';
+                document.querySelector('.rating-scale').style.display = 'none';
+                document.getElementById('message').textContent = 'All weirdos rated!';
+            });
+    }
+
+    function fetchLeaderboard() {
+        fetch('https://your-api-url/leaderboard')
+            .then(response => response.json())
+            .then(data => {
+                const leaderboardList = document.getElementById('leaderboard-list');
+                leaderboardList.innerHTML = '';
+                data.forEach(item => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${item.imageUrl} - ${item.averageRating.toFixed(2)}`;
+                    leaderboardList.appendChild(listItem);
+                });
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+    }
+
+    // Fetch the initial image and leaderboard on page load
+    window.onload = () => {
+        fetchNextImage();
+        fetchLeaderboard();
+    };
+</script>
+</body>
+</html>
